@@ -1,0 +1,304 @@
+Tips:
+Basics:
+Game Objects: They are a container for components (scripts), they are the instantiated version of the scripts within it
+Scriptable Objects: Standalone assets that have more data within it, reduces data within scripts, don't need to be attached to game objects
+Scripts: a piece of code that may be reused
+Scene: a bunch of images, pictures, basically a movie scene, usually have many scenes connected to each other. They are usually named with an index 0,1,2...
+Canvas: within a scene, a container for all the UI components eg buttons, text, inputs
+Anchoring: a way of resizing and positioning based on different screen sizes
+SerializedField: used to reference variables from a script and place it directly onto a Text object in the game
+	-In the class: [SerializeField] int myInteger; or even limit it with     [Range(0.1f,10f)] [SerializeField] float gameSpeed=1f;
+	-In unity, you create an instance of the class, and then text into it myInteger=9;
+	-in the class: any methods you want to do, eg, myIntger=myIntger+1;
+	or: can map values from the class to components
+	-In the class: [SerializeField] Text theString;
+	-in unity, create game object that maps the string to a textbox
+	-in the class: theString.text="fdsajfklsa"
+When creating Game Object, reset its x y z values
+
+Text101:
+-To create a variable in a script that maps onto the game:
+// use [SerializeField] to be able to reference it within the actual game and map the Text object to a Text object in the game
+ // Text is custom made from UnityEngine.UI
+   [SerializeField] Text text;
+		b.  To map it, go into the Game object and find the Text Component and map it to 
+		A text object
+
+-Game State/Scriptable Objects
+	-Scriptable Objects let you store data in standalone assets, reduces data within scripts
+	-Don't need to be attached to game objects
+	1) see State.cs 
+	//This is required to create a Scriptable object so that you can go into game and make the object 
+	[CreateAssetMenu(menuName="State")]
+	public class State : ScriptableObject
+	{
+    //Serialize to map text
+	//TextArea(minsize of field in inspector,amount of line before you scroll/have scroll bar)
+    [TextArea(14,10)] [SerializeText]  string storyText;
+	// has a public get method
+	2) go into unity and make a State Script object in Assets , set in text here
+	3) adventure.cs has a 
+		// a state property that you may map, which is already linked to a State (StartingState) object
+    		[SerializeField] State startingState; (we map this within unity to the instance that is create in 2)
+		// state is the current state and at thte state is set to the startingstate
+    		State state;
+
+		display text:         textComponent.text = state.GetStateStory();
+	4) in State.cs, give it a nextState serialized attribute/array to get the next states
+		- can drag and drop nextStates instances into other states. 
+	5) in adventure.cs, create ManageState method that take in key inputs to change the state of the story, therby changing the text within the game
+		
+
+
+
+Styling:
+TextMeshPro:
+1) download a font
+2) import it into a fonts folder
+3) create a new font and link to any text
+
+
+Scaling:
+1) 16:9 for game
+2) canvas: Scale with screen size
+3) reference resolution
+
+
+
+
+
+
+
+
+Number Wizard:
+Canvas and UI anchoring:
+1) create a canvas (used for ordering UI components together), and button. The button will dynamically change its width/position by anchoring it to the canvas. 
+	=stretch is for width/scaling
+	-position: anchor to top and bottom
+	-note buttons can have highlight, pressed colours, find in properties
+
+
+Multiple Scenes Connection: basically scenes are indexed, so to access the next scene, create a script that has a public method that loads the next scene
+1) create an empty game object, create a new script by adding component
+2) script loads next scene based on curretsceneindex+1
+3) File>Build Setting> Scenes in Build order. 
+4) map in a button the SceneLoader, and the public method LoadNextScene on the onClick method, can do by the index, or the name of the scene
+        SceneManager.LoadScene("Game Over");
+5) if in a script FindObjectOfType<Level>().Loadmyfunction();
+
+
+
+
+Block Breaker:
+
+exporting Assets: eg scenes, scripts to other project
+1) assets>export package, save onto desktop
+2) import package from desktop
+
+scaling:
+1) add in s folder sprites, can change its pivot point to bottom left
+2) change all canavas to 1440 x 1080, 4/3 aspect ratio
+3) change camera to size 6
+4) eg if camera is size 6 (ie half of it is 6), then want a background image to fill it. background image in 1440,1080, therefore, 
+	should be 1080/12 for pixels in background image
+   eg if ball is 256 pixels per unit, that means 1440 image becomes around 4 units large
+5) Background Image: change to z=10 so that it's always behind everything
+
+
+Physics: 
+1) add component Rigidbody2d
+	kinematic:doesn't include gravity
+	dyanmic includes gravity
+	static: doesn't move
+Colisions:
+1) add component: circle collider 2d
+2) create Materials Folder and make a Physics Material 2d
+	-change bounciness 0-1, more than 1 is higher
+
+Trigger vs Collisions:
+1) colisions make it bounce back up
+2) trigger is a method that just triggers and lets it pass through it
+	3) create a trigger script for Game Over switching scenes
+	private void OnTriggerEnter2D(Collider2D collision)
+    {
+        SceneManager.LoadScene("Game Over");
+    }
+
+Move Object with mouse:
+1)create a scrpit for the paddle and attach it to it.
+      // Getting the mouse's x position, as a percentage of the screen's width 0,1 *16
+        float mousePosInUnits=Input.mousePosition.x/Screen.width * screenWidthInUnits;
+        // creating a vector to move the paddle to the mouse's x position, and the y position stays the same
+        Vector2 paddlePos = new Vector2(mousePosInUnits,transform.position.y);
+        // move to the vector
+        transform.position = paddlePos;
+2) limiting x values: math.clamp
+	maxX=15f;
+	minX=1f;	since the drawing is 2 units large, with its location at centre, and width of screen is 16 units
+	paddlePos.x = Mathf.Clamp(mousePosInUnits, minX, maxX);
+3) talking between classes: 
+	-in a second class Ball:
+    		[SerializeField] Paddle paddle1;
+	-in unity can drag an instance of Paddle into it, here we drag the Paddle sprite that is with the Paddle script in it,
+	thereby making it a paddle object. 
+4) how to have objects move with each other: access transform position of other objects and transform ball to the other other's 
+	position, and also if there's a gap, then add that as a vector to the transform.position
+	-in ball Class:
+	// distance from paddle to ball.
+	-        paddleToBallVector = transform.position - paddle1.transform.position;
+	-// getting the paddle's position
+        Vector2 PaddlePos = new Vector2(paddle1.transform.position.x, paddle1.transform.position.y);
+        // moving current object (ball's position to the Paddle's position + the distance to the paddle
+        transform.position = PaddlePos+paddleToBallVector;
+5) Which script executes first?
+	-edit/projectsettings/scriptexecution order
+6) move ball with physics automatically:// using rigid body's velocity property and giving x and y velocity
+ 	GetComponent<RigidBody2D>().velocity = new Vector2(2f, 15f);
+7) making walls: just make game objects with 2d collision with bounce
+
+
+Gravity: 
+1) all game components can have gravity as long as its rigid body 2d
+2) entire scene: gravity edit/settings/
+
+Destroying Game Objects
+1) make a script:
+	//Collision2D is an object that has info about the collision
+	  private void OnCollisionEnter2D(Collision2D collision)
+    {
+        //game object is this object
+        Destroy(gameObject);
+    }
+
+
+
+Prefabs: allow you to make changes across instances of game objects
+1) make prefab folder, drag in a type of game object and then open prefab, should be blue (should have made a prefab file when you 
+click on show in explorer.
+2) anything made to pre fab will be done to all of the instances that are the same as the prefab. 
+3) can do stuff to specific game object by click that instance
+
+
+Draging into place neatly
+1) edit/snap settings
+2) control click
+3) if reset, then move, will be the best
+
+
+
+Sound Effects 
+Audio listener: hear the sound
+audio source: play the sound
+audio clip: the sound 
+Note: sound is distance from camera, the camera already has an audio listener 
+1) in ball, add audio source , add a clip
+2) make audio folder with .ogg audio formats
+3)   in ball script: 
+	 private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (hasLaunched)
+        {
+            GetComponent<AudioSource>().Play();
+
+        }
+
+    }
+4) other set up: 
+//cache audio source component so that don't need to get miultple times 
+    AudioSource myAudioSource;
+5) on void start(){
+        myAudioSource = GetComponent<AudioSource>();
+}
+6)     [SerializeField] AudioClip[] ballSounds; make it an array of audio clips
+7) //can play the whole way through even if others play , not interuptted
+            AudioClip clip = ballSounds[UnityEngine.Random.Range(0, ballSounds.Length)];
+            myAudioSource.PlayOneShot(clip);
+
+8) How to play an audio clip after destroying that component? 
+        AudioSource.PlayClipAtPoint(breakSound, Camera.main.transform.position);
+
+
+
+
+Interacting between Classes::: see levels, block.cs
+1) in blocks, it finds an Levels object that is already created
+
+        level = FindObjectOfType<Levels>();
+        level.ReduceBreakableBlocks();
+
+2) block can now access public methods in Levels,
+	eg a method to change levels attributes.
+	public void CountBreakableBlocks()
+    {
+        breakableBlocks = breakableBlocks + 1;
+    }
+3) note: instances of this can be created with game objects, they each run the script Block
+other ways:
+serialize a field 
+1) Within Ball class.     [SerializeField] Paddle paddle1;
+	then u will drag it in to the ball class
+
+
+Instantiating through Code::: doing particles effects
+1) serialize field;    [SerializeField] GameObject blockSparklesVFX;
+2) drag impactVFX into the block's field
+3) create the object when triggered in 4
+    private void TriggerSparklesVFX()
+    {
+        // another object that instantiates the first object at the block's position
+        GameObject sparkles = Instantiate(sparklesVFX, transform.position, transform.rotation);
+        Destroy(sparkles, 1f);
+    }
+4) trigger on collision
+
+GameSpeed: Used for increasing difficulty, slow mtion stuff
+Time.timeScale=0=slow, 1= normal 1.5fast
+
+
+
+
+SINGLETON PATTERN: how to have variables/objects persist into the next scene
+1) create game session object and script on each scene, if already have one delete it , else dontdestroyonload
+DontDestroyOnLoad(); there can only be one gameStatus object. 
+1)
+   // In unity's scripts execution, Awake is the first thing that is executed
+    private void Awake()
+    {
+        // getting the number of the GameStatus instances
+        int gameStatusCount = FindObjectsOfType<GameStatus>().Length;
+        // if there are two, that being another one and this one, then destroy this one
+        if (gameStatusCount > 1)
+        {
+            // make it inactive so it doesn't mess up other things.
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+        }
+        // otherwise, let this GameStatus persist by not destroying it when the next scene is loaded
+        else
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+2)GameStatus Object will now persist into next scenes. can add other things that you would like to persist,
+ eg game canvas's text by dragging it into Gamestatus 
+
+
+
+Using Tags: a quick way to add a string property to a game object
+1) best used for collisions if tag 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (tag == "Breakable")
+        {
+            DestroyBlock();
+
+
+
+Adding Multiple Sprites: damage affordance
+1)   set an array of sprites: can put in sprites in unity editor
+  [SerializeField] Sprite[] hitSprites;
+2)    change the current sprite whenever something happens
+     GetComponent<SpriteRenderer>().sprite = hitSprites[spriteIndex];
+
+
+
